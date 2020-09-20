@@ -3,7 +3,8 @@ from tkinter.filedialog import askdirectory
 from tkinter import messagebox as mb
 import os
 import zipfile
-from shutil import make_archive
+import time
+import threading
 
 #
 # .py --> .pyw to hide a console
@@ -16,6 +17,9 @@ class Main:
         root.geometry("350x260")
         root.resizable(False, False)
         root.configure(bg="#F7C9C1")
+
+        self.base_dir = str()
+        self.work_dir = str()
 
         # From Wrapper
         from_wrapper = Frame(root, bg="#F7C9C1")
@@ -46,15 +50,15 @@ class Main:
         self.save_ent.pack(side=LEFT, padx=(7, 0))
 
         self.ar4ive_but = Button(root, text="Ar4ive", font=("Helvetica", 16), height=2, width=15, bg="#C1CFF7",
-                                 command=self.ar4ive)
+                                 )
         self.ar4ive_but.pack()
+        self.ar4ive_but.bind("<Button-1>", lambda x: threading.Thread(target=self.preAr4ive).start())
 
     @staticmethod  # try to open dialog window
     def opening():
         try:
             os.chdir(askdirectory())
         except OSError:
-            mb.showerror("Error", "Choose a directory!")
             return False
 
         return True
@@ -77,7 +81,7 @@ class Main:
         self.save_ent.delete(0, END)  # clear path field
         self.save_ent.insert(0, base_dir)  # insert path in path field
 
-    def ar4ive(self):
+    def preAr4ive(self):
         work_dir = self.from_ent.get()  # get paths from path fields
         base_dir = self.save_ent.get()  #
 
@@ -96,26 +100,29 @@ class Main:
         if answer is False:
             return
 
+        self.ar4ive_but.configure(text="in progress...")
+        self.work_dir = work_dir
+        self.base_dir = base_dir
+        self.ar4ive()
+
+    def ar4ive(self):
+        work_dir = self.work_dir
+        base_dir = self.base_dir
+
         work_dir = os.path.join(work_dir, "Songs")  # entering in Songs
         os.chdir(work_dir)  # change current work directory
 
-        mega_zip = zipfile.ZipFile(base_dir + "/Songs.zip", "w")  # create a .zip file
+        mega_zip = zipfile.ZipFile(base_dir + "/Songs.zip", "w", allowZip64=True)  # create a .zip file
 
+        start_time = time.time()
         for path, dirs, files in os.walk(work_dir):  # get tuple (path, dirs[], files[])
+            for file in files:
+                # append .osz file to .zip file
+                mega_zip.write(os.path.relpath(os.path.join(path, file), work_dir), compress_type=zipfile.ZIP_DEFLATED)
 
-            for catalog in dirs:
-                make_archive(catalog, "zip", catalog + "/")  # archiving tmp_catalog
-
-                tmp_zip = catalog + ".zip"  # absolute path to current zip file
-                tmp_osz = os.path.splitext(tmp_zip)[0] + ".osz"  # get the name without extension
-
-                os.rename(tmp_zip, tmp_osz)  # rename .zip to .osz
-
-                mega_zip.write(tmp_osz, compress_type=zipfile.ZIP_DEFLATED)  # append .osz file to .zip file
-                os.remove(tmp_osz)  # remove temporary .osz file
-
-            mb.showinfo("Message", "Ar4iving completed!")
-            break
+        print("Code was executed for {:.3} sec.".format(time.time() - start_time))
+        self.ar4ive_but.configure(text="Ar4ive")
+        mb.showinfo("Message", "Ar4iving completed!")
 
 root = Tk()
 home = Main()
