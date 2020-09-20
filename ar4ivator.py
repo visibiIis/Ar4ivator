@@ -46,7 +46,7 @@ class Main:
         self.save_ent.pack(side=LEFT, padx=(7, 0))
 
         self.ar4ive_but = Button(root, text="Ar4ive", font=("Helvetica", 16), height=2, width=15, bg="#C1CFF7",
-            command=self.ar4ive)
+                                 command=self.ar4ive)
         self.ar4ive_but.pack()
 
     @staticmethod  # try to open dialog window
@@ -102,7 +102,7 @@ class Main:
         mega_zip = zipfile.ZipFile(base_dir + "/Songs.zip", "w")  # create a .zip file
 
         for path, dirs, files in os.walk(work_dir):  # get tuple (path, dirs[], files[])
-            
+
             for catalog in dirs:
                 make_archive(catalog, "zip", catalog + "/")  # archiving tmp_catalog
 
